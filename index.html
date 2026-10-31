@@ -36,13 +36,19 @@
                 return response.text();
             })
             .then(markdown => {
-                // Convert markdown text to clean HTML layout
-                document.getElementById('content').innerHTML = marked.parse(markdown);
-                // Trigger MathJax to scan the page and render LaTeX code into clean symbols
-                if (window.MathJax && typeof window.MathJax.typeset === 'function') {
-                    window.MathJax.typeset();
-                }
-            })
+    // Remove front matter (the block between the first two --- lines)
+    const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+    if (match) {
+        markdown = markdown.slice(match[0].length);
+        // Optional: use the title for the browser tab
+        const title = match[1].match(/^title:\s*(.+)$/m);
+        if (title) document.title = title[1].trim();
+    }
+    document.getElementById('content').innerHTML = marked.parse(markdown);
+    if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+        window.MathJax.typeset();
+    }
+})
             .catch(err => {
                 document.getElementById('content').innerHTML = `<h1>Welcome to My Math Site</h1><p>Start by creating an <code>index.md</code> file in your GitHub repository to write your math content!</p>`;
             });
