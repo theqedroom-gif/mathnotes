@@ -29,6 +29,9 @@
         .crumbs { font-size: 0.85em; color: #888; margin-bottom: 10px; }
         .nav-title { font-size: 1.15em; font-weight: 700; margin-bottom: 6px; }
         .nav-title + ul { padding-left: 0; }
+        ul.level-1 > li { margin-top: 10px; }
+        ul.level-1 > li > a { font-weight: 600; }
+        ul.level-2 { font-size: 0.95em; }
 
         /* Show/hide solutions */
         details { background: #f6f9ff; border: 1px solid #d6e4ff; border-radius: 6px; padding: 10px 16px; margin: 12px 0 24px; }
@@ -133,13 +136,16 @@
                  + tree(sub.file, open, current);
         }
 
-        // Nested list of pages, expanding only the pages on the current path
-        function tree(parentFile, open, current) {
+        // Nested list of pages. Chapters and subchapters (the first two levels) are always shown;
+        // anything deeper only opens when you are on that page or inside it.
+        const ALWAYS_SHOWN_LEVELS = 2;
+        function tree(parentFile, open, current, level = 1) {
             const kids = childrenOf(parentFile);
             if (kids.length === 0) return '';
-            return '<ul>' + kids.map(p =>
-                `<li>${link(p, current)}${open.has(p) ? tree(p.file, open, current) : ''}</li>`
-            ).join('') + '</ul>';
+            return `<ul class="level-${level}">` + kids.map(p => {
+                const showKids = level < ALWAYS_SHOWN_LEVELS || open.has(p);
+                return `<li>${link(p, current)}${showKids ? tree(p.file, open, current, level + 1) : ''}</li>`;
+            }).join('') + '</ul>';
         }
 
         // Show the page named in the URL (e.g. #disciplines/calculus/limits.md), or the homepage

@@ -1,0 +1,29 @@
+[
+  { "file": "index.md", "title": "Home" },
+
+  { "file": "hs-math/index.md", "title": "High School Math", "parent": "index.md" },
+  { "file": "hs-math/grade-7/index.md", "title": "Grade 7", "parent": "hs-math/index.md" },
+  { "file": "hs-math/grade-7/ch1/index.md", "title": "Chapter 1: Integers", "parent": "hs-math/grade-7/index.md" },
+  { "file": "hs-math/grade-7/ch1/adding-integers.md", "title": "1.1 Adding Integers", "parent": "hs-math/grade-7/ch1/index.md" },
+  { "file": "hs-math/grade-7/ch1/subtracting-integers.md", "title": "1.2 Subtracting Integers", "parent": "hs-math/grade-7/ch1/index.md" },
+  { "file": "hs-math/grade-7/ch1/exercises.md", "title": "Chapter 1 Exercises", "parent": "hs-math/grade-7/ch1/index.md" },
+  { "file": "hs-math/grade-7/ch2/index.md", "title": "Chapter 2: Algebraic Expressions", "parent": "hs-math/grade-7/index.md" },
+  { "file": "hs-math/grade-7/ch2/variables.md", "title": "2.1 Variables and Expressions", "parent": "hs-math/grade-7/ch2/index.md" },
+  { "file": "hs-math/grade-7/ch2/simplifying.md", "title": "2.2 Simplifying Expressions", "parent": "hs-math/grade-7/ch2/index.md" },
+  { "file": "hs-math/grade-8/index.md", "title": "Grade 8", "parent": "hs-math/index.md" },
+
+  { "file": "exam-review/index.md", "title": "College Entrance Exam Review", "parent": "index.md" },
+  { "file": "exam-review/practice-tests/index.md", "title": "Practice Tests", "parent": "exam-review/index.md" },
+
+  { "file": "college-math/index.md", "title": "College Math", "parent": "index.md" },
+  { "file": "college-math/calculus-1/index.md", "title": "Calculus I", "parent": "college-math/index.md" },
+
+  { "file": "disciplines/index.md", "title": "Math by Discipline", "parent": "index.md" },
+  { "file": "disciplines/algebra/index.md", "title": "Algebra", "parent": "disciplines/index.md" },
+  { "file": "disciplines/pre-calculus/index.md", "title": "Pre-Calculus", "parent": "disciplines/index.md" },
+  { "file": "disciplines/calculus/index.md", "title": "Calculus", "parent": "disciplines/index.md" },
+  { "file": "disciplines/calculus/limits.md", "title": "Introduction to Limits", "parent": "disciplines/calculus/index.md" },
+  { "file": "disciplines/calculus/derivatives.md", "title": "Derivatives", "parent": "disciplines/calculus/index.md" },
+  { "file": "disciplines/calculus/derivatives/power-rule.md", "title": "The Power Rule", "parent": "disciplines/calculus/derivatives.md" },
+  { "file": "disciplines/calculus/derivatives/chain-rule.md", "title": "The Chain Rule", "parent": "disciplines/calculus/derivatives.md" }
+]
