@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Math Notes</title>
+    <!-- Simple, clean CSS styling -->
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; }
+        h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; color: #111; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        blockquote { border-left: 4px solid #0070f3; margin: 0; padding-left: 20px; color: #555; background: #f9f9f9; padding: 10px 20px; }
+    </style>
+    <!-- Load Markdown Parser (Marked) -->
+    <script src="https://jsdelivr.net"></script>
+    <!-- Load LaTeX Math Renderer (MathJax) -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script src="https://jsdelivr.net" id="MathJax-script" async></script>
+</head>
+<body>
+
+    <!-- This is where your homepage markdown content will automatically display -->
+    <div id="content">Loading notes...</div>
+
+    <script>
+        // Automatically fetches the index.md or introduction file you created earlier
+        // Change 'index.md' below if your file is named something else (like 'README.md')
+        fetch('index.md') 
+            .then(response => {
+                if (!response.ok) throw new Error('Note file not found');
+                return response.text();
+            })
+            .then(markdown => {
+                // Convert markdown text to clean HTML layout
+                document.getElementById('content').innerHTML = marked.parse(markdown);
+                // Trigger MathJax to scan the page and render LaTeX code into clean symbols
+                if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+                    window.MathJax.typeset();
+                }
+            })
+            .catch(err => {
+                document.getElementById('content').innerHTML = `<h1>Welcome to My Math Site</h1><p>Start by creating an <code>index.md</code> file in your GitHub repository to write your math content!</p>`;
+            });
+    </script>
+</body>
+</html>
