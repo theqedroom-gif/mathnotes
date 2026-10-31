@@ -11,6 +11,10 @@
         code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
         pre { background: #f4f4f4; padding: 15px; border-radius: 6px; overflow-x: auto; }
         blockquote { border-left: 4px solid #0070f3; margin: 0; padding-left: 20px; color: #555; background: #f9f9f9; padding: 10px 20px; }
+        nav ul { list-style: none; padding-left: 18px; margin: 4px 0; }
+nav > ul { padding-left: 0; }
+nav a { color: #0070f3; text-decoration: none; }
+nav a:hover { text-decoration: underline; }
     </style>
     <!-- Load Markdown Parser (Marked) -->
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
@@ -30,8 +34,12 @@
 
 <script>
     // 👉 Add each new .md file name here
-    const PAGES = ['index.md', 'derivatives.md'];
-
+    const PAGES = [
+    'index.md',
+    'derivatives.md',
+    'derivatives/power-rule.md',
+    'derivatives/chain-rule.md'
+];
     // Splits a file into its front matter (meta) and the rest (body)
     function parseFrontMatter(text) {
         const meta = {};
@@ -59,10 +67,23 @@
         const weight = p => Number(p.meta.navigation_weight) || 999;
         pages.sort((a, b) => weight(a) - weight(b));
 
-        // Build the menu from each page's title
-        document.getElementById('nav').innerHTML = pages
-            .map(p => `<a href="#${p.file}">${p.meta.title || p.file}</a>`)
-            .join(' | ');
+       // Build a nested menu: each page appears under its "parent"
+function buildMenu(parentFile) {
+    const children = pages.filter(p => (p.meta.parent || '') === parentFile);
+    if (children.length === 0) return '';
+    return '<ul>' + children.map(p =>
+        `<li><a href="#${p.file}">${p.meta.title || p.file}</a>${buildMenu(p.file)}</li>`
+    ).join('') + '</ul>';
+}
+document.getElementById('nav').innerHTML = buildMenu('');// Build a nested menu: each page appears under its "parent"
+function buildMenu(parentFile) {
+    const children = pages.filter(p => (p.meta.parent || '') === parentFile);
+    if (children.length === 0) return '';
+    return '<ul>' + children.map(p =>
+        `<li><a href="#${p.file}">${p.meta.title || p.file}</a>${buildMenu(p.file)}</li>`
+    ).join('') + '</ul>';
+}
+document.getElementById('nav').innerHTML = buildMenu('');
 
         // Show the page named in the URL (e.g. #derivatives.md), or the first one
         function show() {
