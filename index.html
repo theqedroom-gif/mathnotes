@@ -13,16 +13,22 @@
 
         /* Two-column layout: menu on the left, notes on the right */
         .layout { display: flex; gap: 40px; align-items: flex-start; }
-        #nav { flex: 0 0 230px; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; border-right: 1px solid #eee; padding-right: 16px; }
+        #nav { flex: 0 0 240px; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; border-right: 1px solid #eee; padding-right: 16px; }
         #content { flex: 1; min-width: 0; }
 
         /* Menu */
-        nav ul { list-style: none; padding-left: 16px; margin: 2px 0; }
-        nav > ul { padding-left: 0; }
-        nav li { margin: 4px 0; }
         nav a { color: #0070f3; text-decoration: none; }
         nav a:hover { text-decoration: underline; }
         nav a.active { color: #111; font-weight: 600; }
+        nav ul { list-style: none; padding-left: 16px; margin: 2px 0 10px; }
+        nav li { margin: 4px 0; }
+        .nav-home { margin-bottom: 14px; }
+        .nav-section { margin-top: 14px; font-size: 0.8em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .nav-section a { color: #666; }
+        .nav-section + ul { padding-left: 0; }
+        .crumbs { font-size: 0.85em; color: #888; margin-bottom: 10px; }
+        .nav-title { font-size: 1.15em; font-weight: 700; margin-bottom: 6px; }
+        .nav-title + ul { padding-left: 0; }
 
         /* Show/hide solutions */
         details { background: #f6f9ff; border: 1px solid #d6e4ff; border-radius: 6px; padding: 10px 16px; margin: 12px 0 24px; }
@@ -55,90 +61,129 @@
     </div>
 
     <script>
-        // 👉 Add each new .md file name here
-        const PAGES = [
-            'index.md',
-            'derivatives.md',
-            'derivatives/power-rule.md',
-            'derivatives/chain-rule.md'
-        ];
+        // All pages, titles and the menu structure live in pages.json.
+        // The page with no "parent" is the homepage. Its children are the sections,
+        // their children are the subsections, and so on.
+        const SITE_TITLE = 'My Math Notes';
 
-        // Splits a file into its front matter (meta) and the rest (body)
-        function parseFrontMatter(text) {
-            const meta = {};
-            const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
-            if (match) {
-                match[1].split(/\r?\n/).forEach(line => {
-                    const m = line.match(/^(\w+):\s*(.+)$/);
-                    if (m) meta[m[1]] = m[2].trim();
-                });
-                text = text.slice(match[0].length);
-            }
-            return { meta, body: text };
-        }
+        const nav = document.getElementById('nav');
+        const content = document.getElementById('content');
+        const cache = {};
+        let pages = [];
+        let root = null;
+        let showing = null;
 
-        Promise.all(PAGES.map(file =>
-            fetch(file)
+        // Fetch a file as text. Cloudflare returns index.html for missing files, so catch that too.
+        function fetchText(file) {
+            if (cache[file]) return Promise.resolve(cache[file]);
+            return fetch(file)
                 .then(r => {
                     if (!r.ok) throw new Error(file + ' not found');
                     return r.text();
                 })
                 .then(text => {
-                    // Cloudflare returns index.html for missing files
                     if (text.trimStart().toLowerCase().startsWith('<!doctype html')) {
                         throw new Error(file + ' not found (check the file name and folder)');
                     }
-                    return { file, ...parseFrontMatter(text) };
+                    cache[file] = text;
+                    return text;
+                });
+        }
+
+        // Front matter is no longer needed (pages.json has the titles), but remove it if present
+        function stripFrontMatter(text) {
+            return text.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
+        }
+
+        const byFile = file => pages.find(p => p.file === file);
+        const childrenOf = file => pages.filter(p => p.parent === file);   // keeps pages.json order
+
+        // Home > Section > Subsection > ... > page
+        function pathTo(page) {
+            const path = [];
+            while (page && !path.includes(page)) {
+                path.unshift(page);
+                page = byFile(page.parent);
+            }
+            return path;
+        }
+
+        function link(p, current) {
+            const active = p === current ? ' class="active"' : '';
+            return `<a href="#${p.file}"${active}>${p.title}</a>`;
+        }
+
+        // Homepage and section pages: every section with its subsections
+        function homeMenu(current) {
+            let html = `<div class="nav-home">${link(root, current)}</div>`;
+            for (const section of childrenOf(root.file)) {
+                html += `<div class="nav-section">${link(section, current)}</div>`;
+                const subs = childrenOf(section.file);
+                if (subs.length) html += '<ul>' + subs.map(s => `<li>${link(s, current)}</li>`).join('') + '</ul>';
+            }
+            return html;
+        }
+
+        // Inside a subsection: breadcrumb, then only that subsection's pages
+        function subsectionMenu(path, current) {
+            const [home, section, sub] = path;
+            const open = new Set(path);
+            return `<div class="crumbs">${link(home, current)} › ${link(section, current)}</div>`
+                 + `<div class="nav-title">${link(sub, current)}</div>`
+                 + tree(sub.file, open, current);
+        }
+
+        // Nested list of pages, expanding only the pages on the current path
+        function tree(parentFile, open, current) {
+            const kids = childrenOf(parentFile);
+            if (kids.length === 0) return '';
+            return '<ul>' + kids.map(p =>
+                `<li>${link(p, current)}${open.has(p) ? tree(p.file, open, current) : ''}</li>`
+            ).join('') + '</ul>';
+        }
+
+        // Show the page named in the URL (e.g. #disciplines/calculus/limits.md), or the homepage
+        function show() {
+            const page = byFile(decodeURIComponent(location.hash.slice(1))) || root;
+            const path = pathTo(page);
+            showing = page;
+
+            nav.innerHTML = (path[0] === root && path.length >= 3) ? subsectionMenu(path, page) : homeMenu(page);
+            document.title = page === root ? SITE_TITLE : page.title + ' · ' + SITE_TITLE;
+            window.scrollTo(0, 0);
+
+            fetchText(page.file)
+                .then(text => {
+                    if (showing !== page) return;   // the reader already clicked somewhere else
+                    if (window.MathJax && MathJax.typesetClear) MathJax.typesetClear();
+                    content.innerHTML = marked.parse(stripFrontMatter(text));
+                    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
                 })
-        ))
-        .then(pages => {
-            // Sort by navigation_weight (pages without one go last)
-            const weight = p => Number(p.meta.navigation_weight) || 999;
-            pages.sort((a, b) => weight(a) - weight(b));
+                .catch(err => {
+                    console.error(err);
+                    content.innerHTML = `<p>Error: ${err.message}</p>`;
+                });
+        }
 
-            // The current page plus its parent, grandparent, etc.
-            function openPath(page) {
-                const open = new Set();
-                while (page && !open.has(page.file)) {
-                    open.add(page.file);
-                    page = pages.find(p => p.file === page.meta.parent);
+        fetchText('pages.json')
+            .then(text => {
+                try {
+                    pages = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('pages.json has a typo (check for a missing or extra comma or quote): ' + e.message);
                 }
-                return open;
-            }
-
-            // Build the menu, only expanding sub-pages along the open path
-            function buildMenu(parentFile, open, currentFile) {
-                const children = pages.filter(p => (p.meta.parent || '') === parentFile);
-                if (children.length === 0) return '';
-                return '<ul>' + children.map(p => {
-                    const active = p.file === currentFile ? ' class="active"' : '';
-                    const sub = open.has(p.file) ? buildMenu(p.file, open, currentFile) : '';
-                    return `<li><a href="#${p.file}"${active}>${p.meta.title || p.file}</a>${sub}</li>`;
-                }).join('') + '</ul>';
-            }
-
-            // Show the page named in the URL (e.g. #derivatives.md), or the first one
-            function show() {
-                const file = decodeURIComponent(location.hash.slice(1));
-                const page = pages.find(p => p.file === file) || pages[0];
-
-                document.title = page.meta.title || 'My Math Notes';
-                document.getElementById('nav').innerHTML = buildMenu('', openPath(page), page.file);
-
-                if (window.MathJax && MathJax.typesetClear) MathJax.typesetClear();
-                document.getElementById('content').innerHTML = marked.parse(page.body);
-                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
-
-                window.scrollTo(0, 0);
-            }
-
-            window.addEventListener('hashchange', show);
-            show();
-        })
-        .catch(err => {
-            console.error(err);
-            document.getElementById('content').innerHTML = `<p>Error: ${err.message}</p>`;
-        });
+                root = pages.find(p => !p.parent);
+                if (!root) throw new Error('pages.json needs one page with no "parent" (the homepage)');
+                pages.forEach(p => {
+                    if (p.parent && !byFile(p.parent)) console.warn(`"${p.file}" has parent "${p.parent}", which is not in pages.json`);
+                });
+                window.addEventListener('hashchange', show);
+                show();
+            })
+            .catch(err => {
+                console.error(err);
+                content.innerHTML = `<p>Error: ${err.message}</p>`;
+            });
     </script>
 </body>
 </html>
