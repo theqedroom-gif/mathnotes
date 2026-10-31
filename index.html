@@ -12,9 +12,13 @@
         pre { background: #f4f4f4; padding: 15px; border-radius: 6px; overflow-x: auto; }
         blockquote { border-left: 4px solid #0070f3; margin: 0; padding-left: 20px; color: #555; background: #f9f9f9; padding: 10px 20px; }
         nav ul { list-style: none; padding-left: 18px; margin: 4px 0; }
-nav > ul { padding-left: 0; }
-nav a { color: #0070f3; text-decoration: none; }
-nav a:hover { text-decoration: underline; }
+        nav > ul { padding-left: 0; }
+        nav a { color: #0070f3; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+        details { background: #f6f9ff; border: 1px solid #d6e4ff; border-radius: 6px; padding: 10px 16px; margin: 12px 0 24px; }
+        summary { cursor: pointer; font-weight: 600; color: #0070f3; }
+        details[open] summary { margin-bottom: 10px; }
+        details[open] summary::after { content: " (click to hide)"; font-weight: normal; color: #888; font-size: 0.9em; }
     </style>
     <!-- Load Markdown Parser (Marked) -->
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
