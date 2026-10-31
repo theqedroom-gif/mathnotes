@@ -25,33 +25,62 @@
 <body>
 
     <!-- This is where your homepage markdown content will automatically display -->
-    <div id="content">Loading notes...</div>
+    <nav id="nav" style="margin-bottom: 20px;"></nav>
+<div id="content">Loading notes...</div>
 
-    <script>
-        // Automatically fetches the index.md or introduction file you created earlier
-        // Change 'index.md' below if your file is named something else (like 'README.md')
-        fetch('index.md') 
-            .then(response => {
-                if (!response.ok) throw new Error('Note file not found');
-                return response.text();
-            })
-            .then(markdown => {
-    // Remove front matter (the block between the first two --- lines)
-    const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
-    if (match) {
-        markdown = markdown.slice(match[0].length);
-        // Optional: use the title for the browser tab
-        const title = match[1].match(/^title:\s*(.+)$/m);
-        if (title) document.title = title[1].trim();
-    }
-    document.getElementById('content').innerHTML = marked.parse(markdown);
-    if (window.MathJax && typeof window.MathJax.typeset === 'function') {
-        window.MathJax.typeset();
-    }
-})
-            .catch(err => {
-                document.getElementById('content').innerHTML = `<h1>Welcome to My Math Site</h1><p>Start by creating an <code>index.md</code> file in your GitHub repository to write your math content!</p>`;
+<script>
+    // 👉 Add each new .md file name here
+    const PAGES = ['index.md', 'derivatives.md'];
+
+    // Splits a file into its front matter (meta) and the rest (body)
+    function parseFrontMatter(text) {
+        const meta = {};
+        const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+        if (match) {
+            match[1].split(/\r?\n/).forEach(line => {
+                const m = line.match(/^(\w+):\s*(.+)$/);
+                if (m) meta[m[1]] = m[2].trim();
             });
-    </script>
+            text = text.slice(match[0].length);
+        }
+        return { meta, body: text };
+    }
+
+    Promise.all(PAGES.map(file =>
+        fetch(file)
+            .then(r => {
+                if (!r.ok) throw new Error(file + ' not found');
+                return r.text();
+            })
+            .then(text => ({ file, ...parseFrontMatter(text) }))
+    ))
+    .then(pages => {
+        // Sort by navigation_weight (pages without one go last)
+        const weight = p => Number(p.meta.navigation_weight) || 999;
+        pages.sort((a, b) => weight(a) - weight(b));
+
+        // Build the menu from each page's title
+        document.getElementById('nav').innerHTML = pages
+            .map(p => `<a href="#${p.file}">${p.meta.title || p.file}</a>`)
+            .join(' | ');
+
+        // Show the page named in the URL (e.g. #derivatives.md), or the first one
+        function show() {
+            const file = decodeURIComponent(location.hash.slice(1));
+            const page = pages.find(p => p.file === file) || pages[0];
+            document.title = page.meta.title || 'My Math Notes';
+            if (window.MathJax && MathJax.typesetClear) MathJax.typesetClear();
+            document.getElementById('content').innerHTML = marked.parse(page.body);
+            if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+        }
+
+        window.addEventListener('hashchange', show);
+        show();
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById('content').innerHTML = `<p>Error: ${err.message}</p>`;
+    });
+</script>
 </body>
 </html>
